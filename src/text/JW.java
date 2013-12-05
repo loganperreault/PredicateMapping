@@ -6,7 +6,7 @@ import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
 public class JW extends StringCompare {
 
 	// the class for the Jaro-Winkler algorithm
-	JaroWinkler jw = new JaroWinkler();
+	static JaroWinkler jw = new JaroWinkler();
 	
 	@Override
 	public double compare(String str1, String str2) {

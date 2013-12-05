@@ -5,9 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import text.StringCompare;
+import text.*;
 
-import text.JW;
 import kldivergence.KLDivergence;
 
 public class Driver {
@@ -20,16 +19,19 @@ public class Driver {
 	public static void main(String [] args) {
 	
 		// select the string comparison metric
-		StringCompare compare = new JW();
+//		StringCompare compare = new JW();
+		StringCompare compare = new Dice();
 		// create the KL Divergence class
 		KLDivergence kld = new KLDivergence(compare);
 		// set the max number of predicates to look at
 		kld.setLimit(500);
 		// set the starting threshold for the string comparison (will be decreased dynamically if too strict)
 		kld.setStartingThreshold(0.91);
+//		kld.setStartingThreshold(0.60);
 		
 		// choose which predicates will be matched
-		testSemanticSubset();
+//		testMoviesSubset();
+		testSpeciesSubset();
 		
 		//kld.setEcho(true);	// prints additional information
 		
@@ -49,10 +51,25 @@ public class Driver {
 		
 	}
 	
+	// read a subset of dbpedia predicates and all taxonomy predicates
+	public static void testSpeciesSubset() {
+		String local_directory = "data/species/dbpedia/";
+		String target_directory = "data/species/taxonomy/";
+		
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.class"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.family"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.genus"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.kingdom"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.order"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.phylum"));
+		
+		remotePredicates = getPredicatesFromDirectory(target_directory);
+	}
+	
 	// read a subset of dbpedia predicates and all linkedmdb predicates
-	public static void testSemanticSubset() {
-		String dbpedia_directory = "data/semantic/dbpedia/";
-		String lmdb_directory = "data/semantic/lmdb/";
+	public static void testMoviesSubset() {
+		String dbpedia_directory = "data/movies/dbpedia/";
+		String lmdb_directory = "data/movies/linkedmdb/";
 		
 		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.starring"));
 		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.director"));
@@ -96,11 +113,15 @@ public class Driver {
 	private static List<Predicate> getPredicatesFromDirectory(String directory) {
 		List<Predicate> list = new ArrayList<Predicate>();
 		File folder = new File(directory);
-	    for (File fileEntry : folder.listFiles()) {
-	        if (!fileEntry.isDirectory()) {
-	            list.add(new Predicate(directory+fileEntry.getName()));
-	        }
-	    }
+		if (folder.isDirectory()) {
+		    for (File fileEntry : folder.listFiles()) {
+		        if (!fileEntry.isDirectory()) {
+		            list.add(new Predicate(directory+fileEntry.getName()));
+		        }
+		    }
+		} else {
+			throw new IllegalArgumentException(directory+" is not a directory.");
+		}
 	    return list;
 	}
 	
