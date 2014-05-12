@@ -27,6 +27,8 @@ public class Predicate {
     Iterator<Entry<String, Integer>> it;
     // an arrayList for getting entries in the predicate
     ArrayList<Map.Entry<String, Integer>> list = null;
+    // the percent of lines a string must appear to be considered a constant
+    double constantValue = 1.0;
     
     // Predicates with no file are blank
     public Predicate() {
@@ -151,27 +153,64 @@ public class Predicate {
         words.clear();
     }
     
+    /**
+     * Removes constants, or "stop words". This will  
+     * remove text that has been tagged to every field.
+     */
     public void stripConstants() {
+    	
+    	// loop through all lines in the predicate file
     	Iterator<Entry<String, Integer>> it = words.entrySet().iterator();
     	Map.Entry<String, Integer> entry = null;
     	List<String> toRemove = null;
-    	for (entry = it.next(); it.hasNext(); entry = it.next()) {
+    	List<Integer> toRemoveCount = null;
+    	int count = 0;
+    	while (it.hasNext()) {
+    		entry = it.next();
+    		
+    		// tokenize the line by whitespace
     		List<String> tokens = new ArrayList<String>(Arrays.asList(entry.getKey().split("\\s+")));
-    		if (toRemove == null) {
-				toRemove = new ArrayList<String>();
-				for (String token : tokens) {
-	    			toRemove.add(token);
-	    		}
-			} else {
-				for (int i = 0; i < toRemove.size(); i++) {
-					String removeItem = toRemove.get(i);
-					if (!tokens.contains(removeItem)) {
-						toRemove.remove(i);
+    		
+    		// only look for constants in lines with more than 1 token
+    		if (tokens.size() > 1) {
+	    		if (toRemove == null) {
+	    			// if this is the first line, get a list of all the words
+	        		// and add to a list of words to remove
+					toRemove = new ArrayList<String>();
+					toRemoveCount = new ArrayList<Integer>();
+					for (String token : tokens) {
+		    			toRemove.add(token);
+		    			toRemoveCount.add(1);
+		    		}
+				} else {
+					// count the times a word reappears in all lines
+					for (int i = 0; i < toRemove.size(); i++) {
+						String removeItem = toRemove.get(i);
+						if (tokens.contains(removeItem)) {
+							toRemoveCount.set(i, toRemoveCount.get(i) + 1);
+						}
 					}
 				}
-			}
+	    		count++;
+    		}
     	}
     	
+    	// if all string contained 1 token, return
+    	if (toRemove == null)
+    		return;
+    	
+    	// only remove constants that appear often enough
+    	List<String> newRemove = new ArrayList<String>();
+    	for (int i = 0; i < toRemove.size(); i++) {
+    		if (toRemoveCount.get(i) > (count * constantValue)) {
+    			newRemove.add(toRemove.get(i));
+    			System.out.println("Removing "+toRemove.get(i));
+    		}
+    	}
+    	toRemove = newRemove;
+    	
+    	// loop through all the lines in the predicate, removing the constants
+    	// that are shared by all predicates
     	Map<String, Integer> newWords = new HashMap<String, Integer>();
     	it = words.entrySet().iterator();
     	for (entry = it.next(); it.hasNext(); entry = it.next()) {
@@ -187,6 +226,19 @@ public class Predicate {
     	// set list to newly constructed list
     	words = newWords;
     	
+    }
+    
+    public void setConstantValue(double constantValue) {
+    	this.constantValue = constantValue;
+    }
+    
+    public void printWords() {
+    	Iterator<Entry<String, Integer>> it = words.entrySet().iterator();
+    	Map.Entry<String, Integer> entry = null;
+    	while (it.hasNext()) {
+    		entry = it.next(); 
+    		System.out.println(entry.getKey()+"    "+entry.getValue());
+    	}
     }
 
 }

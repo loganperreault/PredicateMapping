@@ -55,15 +55,20 @@ public class KLDivergence {
         // loop through list of local predicates
         for (Predicate predicate : localPredicates) {
             // run the algorithm, attempting to match the current local predicate to a predicate in the remote list
+        	long startTime = System.nanoTime();
             Predicate match = select(predicate, remotePredicates);
+            long duration = System.nanoTime() - startTime;
+            System.out.println("TIME: "+duration);
             // free the word list for the current local predicate (not needed anymore)
             predicate.free();
             // add the new mapping
             matches.put(predicate, match);
             // print as we go (we can print the mapping that is returned, but it all prints at once)
-            System.out.print(currentThreshold+": ");
-            System.out.print(match.getConfidence()+": ");
-            System.out.println(predicate.getShortName() + " ~ "+ match.getShortName());
+            if (echo) {
+            	System.out.print(currentThreshold+": ");
+            	System.out.print(match.getConfidence()+": ");
+            	System.out.println(predicate.getShortName() + " ~ "+ match.getShortName());
+            }
         }
         return matches;
     }
@@ -80,7 +85,7 @@ public class KLDivergence {
         // set up
         Predicate best = null;
         List<Double> divergences = new ArrayList<Double>(remotePredicates.size());
-        int validFound = 0;
+        int validFound = -1;
         currentThreshold = thresholdStart;
         double currentThresholdStep = thresholdStep;
         double minDivergence = Double.MAX_VALUE;
@@ -173,7 +178,6 @@ public class KLDivergence {
     	// loop through all words in predicate 1
 		for (i = 0, p1Word = p1.getStart(); p1Word != p1.getLast(); p1Word = p1.getNext(), i++) {
 			
-			//System.out.println(p1Word.getKey());
 			// break if past our limit
 			if (limit > 0 && i > limit)
 				break;

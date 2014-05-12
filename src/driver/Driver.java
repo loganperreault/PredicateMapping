@@ -28,34 +28,31 @@ public class Driver {
 		// create the KL Divergence class
 		KLDivergence kld = new KLDivergence(compare);
 		// set the max number of predicates to look at
-		kld.setLimit(1000);
+		kld.setLimit(500);
 		// set the starting threshold for the string comparison (will be decreased dynamically if too strict)
-//		kld.setStartingThreshold(0.85);
-		kld.setStartingThreshold(0.70);
+//		kld.setStartingThreshold(0.99);
+		kld.setStartingThreshold(0.81);
 		
-		kld.setThresholdStep(0.01);
-		kld.setValidRequired(5);
+		kld.setThresholdStep(0.02);
+		kld.setValidRequired(0);
 		
-		// test 1: limit 500, JW compare, starting .996, step .002, required 6
 		// test 4: limit 500, DICE compare, starting .85, step .02, required 5
-		
-		// test A: limit 800, JW compare, starting .95, step .02, required 10
-		// test B: limit 800, JW compare, starting .95, step .02, required 5
-		// test C: limit 800, JW compare, starting .95, step .02, required 15
-		// test D: limit 800, JW compare, starting .95, step .02, required 3
-		// test E: limit 3000, JW compare, starting .85, step .01, required 1
-		
+		// test A: limit 1000, JW compare, starting .97, step 0.01, required 5
+		// test B: limit 1000, JW compare, starting .97, step 0.01, required 7
+		// test C: limit 2000, JW compare, starting .99, step 0.005, required 2
+		// test D: limit 2000, JW compare, starting .99, step 0.005, required 3
 		
 		// choose which predicates will be matched
-		testMoviesSubset();
+//		testMoviesSubset();
 //		testSpeciesSubset();
+		testMoviesSubsetLocal();
 		
-		stripConstants();
+		stripConstants(1.0);
 		
 //		kld.setEcho(true);	// prints additional information
 		
 		// execute the algorithm, matching predicates as well as possible
-		Map<Predicate, Predicate> matches = kld.select(localPredicates, remotePredicates);
+		kld.select(localPredicates, remotePredicates);
 		results = kld.getResults();
 		System.out.println();
 		
@@ -66,11 +63,13 @@ public class Driver {
 		
 	}
 	
-	private static void stripConstants() {
+	private static void stripConstants(double constantValue) {
 		for (Predicate predicate : localPredicates) {
+			predicate.setConstantValue(constantValue);
 			predicate.stripConstants();
 		}
 		for (Predicate predicate : remotePredicates) {
+			predicate.setConstantValue(constantValue);
 			predicate.stripConstants();
 		}
 	}
@@ -116,17 +115,36 @@ public class Driver {
 		}
 	}
 	
+	// read a subset of dbpedia predicates and compare to all dbpedia predicates
+	public static void testMoviesSubsetLocal() {
+		String dbpedia_directory = "data/movies/dbpedia/";
+		
+		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.starring"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.director"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.producer"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.writer"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.editor"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.genre"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.precededBy"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.followedBy"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.country"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.artist"));
+//			localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.cinematography"));
+		
+		remotePredicates = getPredicatesFromDirectory(dbpedia_directory);
+	}
+	
 	// read a subset of dbpedia predicates and all taxonomy predicates
 	public static void testSpeciesSubset() {
 		String local_directory = "data/species/dbpedia/";
 		String target_directory = "data/species/taxonomy/";
 		
-//		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.class"));
-//		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.family"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.class"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.family"));
 		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.genus"));
-//		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.kingdom"));
-//		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.order"));
-//		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.phylum"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.kingdom"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.order"));
+		localPredicates.add(new Predicate(local_directory+"http.dbpedia.org.ontology.phylum"));
 		
 		remotePredicates = getPredicatesFromDirectory(target_directory);
 	}
@@ -136,8 +154,8 @@ public class Driver {
 		String dbpedia_directory = "data/movies/dbpedia/";
 		String lmdb_directory = "data/movies/linkedmdb/";
 		
-//		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.starring"));
-		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.director"));
+		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.starring"));
+//		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.director"));
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.producer"));
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.writer"));
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.editor"));
@@ -145,7 +163,8 @@ public class Driver {
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.precededBy"));
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.followedBy"));
 //		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.country"));
-//		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.rating"));
+//		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.artist"));
+//		localPredicates.add(new Predicate(dbpedia_directory+"http.dbpedia.org.property.cinematography"));
 		
 		remotePredicates = getPredicatesFromDirectory(lmdb_directory);
 	}
